@@ -1,0 +1,9 @@
+*.iml
+.gradle/
+out/
+run/
+.idea/
+gradle/
+gradlew
+.DS_STORE
+!src/

@@ -1,0 +1,10 @@
+{
+  "required": true,
+  "compatibilityLevel": "JAVA_8",
+  "package": "com.example.mixins",
+  "refmap": "mixin.example.refmap.json",
+  "verbose": true,
+  "mixins": [
+    "MixinEntityPlayerSP"
+  ]
+}

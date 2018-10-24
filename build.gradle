@@ -1,0 +1,129 @@
+import java.util.concurrent.TimeUnit
+
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven {
+            name = "forge"
+            url = "http://files.minecraftforge.net/maven"
+        }
+        maven {
+            name = 'sponge'
+            url = 'https://repo.spongepowered.org/maven'
+        }
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            url 'https://jitpack.io'
+        }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
+        classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
+    }
+}
+
+configurations {
+    shade
+    compile.extendsFrom(shade)
+}
+
+apply plugin: 'net.minecraftforge.gradle.tweaker-client'
+apply plugin: 'org.spongepowered.mixin'
+apply plugin: 'java'
+
+version = "1.0-SNAPSHOT"
+group = "com.example"
+archivesBaseName = "ExampleClient"
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+compileJava.options.encoding = 'UTF-8'
+
+minecraft {
+    version = "1.8.9"
+    tweakClass = "com.example.launch.ExampleTweaker"
+    mappings = "stable_20"
+    runDir = 'run'
+    makeObfSourceJar = false
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.9'
+}
+
+dependencies {
+
+    shade('org.spongepowered:mixin:0.7.7-SNAPSHOT') {
+        exclude module: 'launchwrapper'
+        exclude module: 'commons-io'
+        exclude module: 'gson'
+    }
+
+    shade 'com.squareup.okhttp3:okhttp:3.9.0'
+
+    shade group: 'org.slick2d', name: 'slick2d-core', version: '1.0.2'
+    shade group: 'com.nativelibs4java', name: 'bridj', version: '0.7.0'
+    shade 'com.google.code.gson:gson:2.8.5'
+
+    shade group: 'org.reflections', name: 'reflections', version: '0.9.9'
+    shade 'org.ow2.asm:asm-debug-all:5.0.3'
+    shade 'org.apache.httpcomponents:httpclient:4.5.6'
+
+}
+
+mixin {
+    defaultObfuscationEnv notch
+    add sourceSets.main, "mixin.exaple.refmap.json"
+}
+
+repositories {
+    maven { url "https://jitpack.io" }
+    maven {
+        name = 'sponge'
+        url = 'https://repo.spongepowered.org/maven/'
+    }
+    mavenCentral()
+    jcenter()
+}
+
+processResources {
+    inputs.files "src/main/resources"
+    outputs.dir "build/classes/main"
+    copy {
+        from("src/main/resources")
+        into("build/classes/main")
+    }
+}
+
+jar {
+    dependsOn configurations.compile
+    from {
+        configurations.shade.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+}
+
+configurations.all {
+    resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
+}
+
+
+jar {
+    manifest.attributes(
+            "MixinConfigs": 'mixins.example.json',
+            "TweakClass": 'com.example.launch.ExampleTweaker',
+            "TweakOrder": 0,
+            "Manifest-Version": 1.0
+    )
+    configurations.shade.each { dep ->
+        from(project.zipTree(dep)) {
+            exclude 'META-INF', 'META-INF/**'
+            exclude 'org/jetbrains/annotations', 'org/jetbrains/annotations/**'
+        }
+    }
+}
